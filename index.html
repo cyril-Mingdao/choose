@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>學生答題專用網頁 - 擴充選項版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        #container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        .pane {
+            position: relative;
+            width: 100%;
+            padding: 15px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s;
+        }
+
+        /* 上半部維持 20% (2:8 比例) */
+        #top-pane {
+            height: 20%; 
+            background-color: #2c3e50;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        #bottom-pane {
+            flex: 1;
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            min-height: 0;
+        }
+
+        #resizer {
+            height: 16px;
+            background: #e67e22;
+            cursor: row-resize;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            border-top: 2px solid #d35400;
+            border-bottom: 2px solid #d35400;
+            flex-shrink: 0;
+        }
+        
+        #resizer::after {
+            content: ":::";
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 2px;
+            margin-top: -4px;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            z-index: 5;
+            flex-shrink: 0;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 1.2rem;
+            white-space: nowrap;
+        }
+
+        select {
+            padding: 10px 14px;
+            font-size: 1.1rem;
+            border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 8px;
+            background-color: white;
+            color: #333;
+            flex-grow: 1;
+            max-width: 400px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            z-index: 50;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.1s;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #top-overlay { 
+            background-color: #000000;
+            color: #00ffff; 
+        }
+
+        #bottom-overlay { 
+            /* 預設值，實際上會被 JS 覆蓋 */
+            background-color: #333; 
+            color: #fff;            
+        }
+
+        #top-overlay-text, #bottom-overlay-text { 
+            line-height: 1; 
+            white-space: nowrap; 
+            margin: 0;
+            padding: 0;
+            display: inline-block;
+        }
+
+        #grid-container {
+            flex: 1;
+            display: grid;
+            gap: 12px;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            padding-bottom: 5px;
+        }
+
+        /* 按鈕樣式 (顏色來源) */
+        .option-btn {
+            border: none;
+            border-radius: 12px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            overflow: hidden; 
+        }
+
+        .option-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.2);
+        }
+
+        /* 各選項顏色定義 */
+        .option-btn:nth-child(1) { background-color: #e74c3c; color: white; } /* A 紅 */
+        .option-btn:nth-child(2) { background-color: #3498db; color: white; } /* B 藍 */
+        .option-btn:nth-child(3) { background-color: #2ecc71; color: white; } /* C 綠 */
+        .option-btn:nth-child(4) { background-color: #f1c40f; color: #333;   } /* D 黃 (黑字) */
+        .option-btn:nth-child(5) { background-color: #9b59b6; color: white; } /* E 紫 */
+        .option-btn:nth-child(6) { background-color: #1abc9c; color: white; } /* F 青 */
+        .option-btn:nth-child(7) { background-color: #e67e22; color: white; } /* G 橘 */
+        .option-btn:nth-child(8) { background-color: #34495e; color: white; } /* H 深藍 */
+        .option-btn:nth-child(9) { background-color: #7f8c8d; color: white; } /* I 灰 */
+
+    </style>
+</head>
+<body>
+
+<div id="container">
+    
+    <div id="top-pane" class="pane">
+        <div class="controls">
+            <label for="group-select">組別：</label>
+            <select id="group-select">
+                <option value="" disabled selected>▾ 請選擇組別</option>
+            </select>
+        </div>
+        <div id="top-overlay" class="overlay">
+            <span id="top-overlay-text">第 1 組</span>
+        </div>
+    </div>
+
+    <div id="resizer"></div>
+
+    <div id="bottom-pane" class="pane">
+        <div class="controls">
+            <label for="mode-select">選項：</label>
+            <select id="mode-select">
+                <option value="AD">模式 A-D (2x2)</option>
+                <option value="AF">模式 A-F (2x3)</option>
+                <option value="AI">模式 A-I (3x3)</option>
+            </select>
+        </div>
+        <div id="grid-container"></div>
+        <div id="bottom-overlay" class="overlay">
+            <span id="bottom-overlay-text">A</span>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- 初始化 ---
+    const groupSelect = document.getElementById('group-select');
+    const modeSelect = document.getElementById('mode-select');
+    const topOverlay = document.getElementById('top-overlay');
+    const topOverlayText = document.getElementById('top-overlay-text');
+    const bottomOverlay = document.getElementById('bottom-overlay');
+    const bottomOverlayText = document.getElementById('bottom-overlay-text');
+    const gridContainer = document.getElementById('grid-container');
+    const topPane = document.getElementById('top-pane');
+    const bottomPane = document.getElementById('bottom-pane');
+    const container = document.getElementById('container');
+
+    // --- 組別邏輯 (修改處：新增 1-1 ~ 8-2) ---
+    
+    // 1. 原有的 第1組 - 第20組
+    for (let i = 1; i <= 20; i++) {
+        let option = document.createElement('option');
+        option.value = `第 ${i} 組`;
+        option.textContent = `第 ${i} 組`;
+        groupSelect.appendChild(option);
+    }
+
+    // 2. 新增的選項：1-1 到 8-2
+    for (let i = 1; i <= 8; i++) {
+        for (let j = 1; j <= 2; j++) {
+            let label = `${i}-${j}`; // 產生文字如 1-1, 1-2, 2-1...
+            let option = document.createElement('option');
+            option.value = label;
+            option.textContent = label;
+            groupSelect.appendChild(option);
+        }
+    }
+
+    groupSelect.addEventListener('change', function() {
+        topOverlayText.textContent = this.value;
+        topOverlay.classList.add('active');
+        adjustFontSize();
+    });
+    topOverlay.addEventListener('click', function() {
+        this.classList.remove('active');
+    });
+
+    // --- 選項網格邏輯 ---
+    const modes = {
+        'AD': { labels: ['A','B','C','D'], cols: 2 },
+        'AF': { labels: ['A','B','C','D','E','F'], cols: 3 }, 
+        'AI': { labels: ['A','B','C','D','E','F','G','H','I'], cols: 3 }
+    };
+
+    function renderGrid(modeKey) {
+        gridContainer.innerHTML = '';
+        const config = modes[modeKey];
+        gridContainer.style.gridTemplateColumns = `repeat(${config.cols}, 1fr)`;
+
+        config.labels.forEach(label => {
+            const btn = document.createElement('div');
+            btn.className = 'option-btn';
+            btn.textContent = label;
+            
+            // 綁定點擊事件
+            btn.addEventListener('click', function() {
+                // 1. 設定文字
+                bottomOverlayText.textContent = label;
+                
+                // 2. 獲取被點擊按鈕的樣式 (背景與顏色)
+                const computedStyle = window.getComputedStyle(this);
+                bottomOverlay.style.backgroundColor = computedStyle.backgroundColor;
+                bottomOverlay.style.color = computedStyle.color;
+
+                // 3. 顯示層級
+                bottomOverlay.classList.add('active');
+                adjustFontSize();
+            });
+            
+            gridContainer.appendChild(btn);
+        });
+    }
+    renderGrid('AD');
+    modeSelect.addEventListener('change', function() { renderGrid(this.value); });
+    bottomOverlay.addEventListener('click', function() { this.classList.remove('active'); });
+
+
+    // --- 防溢出字體計算邏輯 ---
+    function adjustFontSize() {
+        const bWidth = bottomPane.clientWidth;
+        const bHeight = bottomPane.clientHeight;
+        const bSize = Math.min(bHeight * 0.85, bWidth * 0.9); 
+        bottomOverlayText.style.fontSize = `${bSize}px`;
+
+        const tWidth = topPane.clientWidth;
+        const tHeight = topPane.clientHeight;
+        // 上方字體大小計算，這對短字串 (如 3-1) 同樣適用，不會溢出
+        const tSize = Math.min(tHeight * 0.85, tWidth / 4.5); 
+        topOverlayText.style.fontSize = `${tSize}px`;
+    }
+
+    window.addEventListener('load', adjustFontSize);
+    window.addEventListener('resize', adjustFontSize);
+
+
+    // --- 分隔線拖曳邏輯 ---
+    const resizer = document.getElementById('resizer');
+    
+    let isResizing = false;
+    const MIN_TOP_HEIGHT = 80;
+    const MIN_BOTTOM_HEIGHT = 150;
+
+    resizer.addEventListener('mousedown', initDrag);
+    resizer.addEventListener('touchstart', initDrag, {passive: false});
+
+    function initDrag(e) {
+        isResizing = true;
+        resizer.style.background = '#d35400';
+        e.preventDefault(); 
+    }
+
+    window.addEventListener('mousemove', doDrag);
+    window.addEventListener('touchmove', doDrag, {passive: false});
+
+    function doDrag(e) {
+        if (!isResizing) return;
+        
+        let clientY = e.clientY;
+        if(e.touches && e.touches.length > 0) {
+            clientY = e.touches[0].clientY;
+        }
+
+        const containerHeight = container.offsetHeight;
+        let newTopHeight = clientY;
+
+        if (newTopHeight < MIN_TOP_HEIGHT) {
+            newTopHeight = MIN_TOP_HEIGHT;
+        }
+        if (newTopHeight > (containerHeight - MIN_BOTTOM_HEIGHT)) {
+            newTopHeight = containerHeight - MIN_BOTTOM_HEIGHT;
+        }
+
+        topPane.style.height = `${newTopHeight}px`;
+
+        adjustFontSize(); 
+    }
+
+    window.addEventListener('mouseup', stopDrag);
+    window.addEventListener('touchend', stopDrag);
+
+    function stopDrag() {
+        if(isResizing) {
+            isResizing = false;
+            resizer.style.background = '#e67e22';
+            adjustFontSize();
+        }
+    }
+
+</script>
+
+</body>
+</html>
