@@ -12,7 +12,7 @@
     <meta name="author" content="詹宗龍（臺中明道中學）">
     <meta name="copyright" content="© 2026 詹宗龍（臺中明道中學）。保留一切權利。">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>學生答題專用網頁 - 擴充選項版</title>
+    <title>選擇題</title>
     <style>
         * {
             box-sizing: border-box;
@@ -366,7 +366,11 @@
         const bSize = Math.min(bHeight * 0.85, bWidth * 0.9); 
         bottomOverlayText.style.fontSize = `${bSize}px`;
 
-        const tWidth = topPane.clientWidth;
+        // 組別大字讓開右上角 QR code 鈕，避免被遮住
+        const qrBtn = document.getElementById('qr-btn');
+        const qrSpace = qrBtn ? qrBtn.offsetWidth + 25 : 0;
+        topOverlay.style.paddingRight = `${qrSpace}px`;
+        const tWidth = topPane.clientWidth - qrSpace;
         const tHeight = topPane.clientHeight;
         // 上方字體大小計算，這對短字串 (如 3-1) 同樣適用，不會溢出
         const tSize = Math.min(tHeight * 0.85, tWidth / 4.5); 
