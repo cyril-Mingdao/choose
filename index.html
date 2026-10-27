@@ -214,6 +214,27 @@
         }
 
         #qr-btn svg { width: 100%; height: 100%; display: block; }
+        /* 全螢幕切換圖示鈕（浮在畫面右下角） */
+        #fs-btn {
+            position: fixed;
+            right: 14px;
+            bottom: 14px;
+            width: 46px;
+            height: 46px;
+            padding: 0;
+            border: 2px solid rgba(255,255,255,0.7);
+            border-radius: 10px;
+            background-color: rgba(17,17,17,0.6);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 40;
+        }
+
+        #fs-btn svg { width: 26px; height: 26px; display: block; }
+        #fs-btn:active { background-color: rgba(17,17,17,0.85); }
         #top-pane .controls { padding-right: min(150px, calc(20vh - 4px)); }
 
         #qr-full {
@@ -271,6 +292,8 @@
 
 </div>
 
+<button id="fs-btn" type="button" title="全螢幕" aria-label="全螢幕"></button>
+
 <div id="qr-full" title="點一下關閉">
     <svg viewBox="0 0 33 33" class="segno"><path fill="#fff" d="M0 0h33v33h-33z"/><path class="qrline" stroke="#000" d="M2 2.5h7m5 0h2m3 0h2m3 0h7m-29 1h1m5 0h1m1 0h6m2 0h2m4 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h4m1 0h3m1 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h3m4 0h4m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h1m4 0h1m1 0h1m1 0h1m1 0h1m1 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h1m1 0h2m2 0h3m2 0h2m-21 1h1m5 0h1m1 0h1m2 0h1m1 0h1m3 0h1m1 0h1m1 0h2m2 0h3m-24 1h2m7 0h3m3 0h1m3 0h2m1 0h2m-27 1h1m1 0h1m2 0h2m2 0h1m1 0h4m4 0h1m1 0h3m-24 1h2m2 0h1m2 0h3m1 0h1m1 0h1m3 0h1m6 0h1m-26 1h2m1 0h1m1 0h3m1 0h1m2 0h3m1 0h1m2 0h5m4 0h1m-26 1h1m1 0h1m3 0h4m2 0h6m1 0h3m2 0h2m-29 1h1m5 0h2m4 0h1m2 0h2m1 0h1m3 0h1m2 0h2m-27 1h1m2 0h2m2 0h1m1 0h1m1 0h2m1 0h3m1 0h1m2 0h2m1 0h1m1 0h1m1 0h1m-29 1h4m1 0h3m7 0h1m1 0h1m5 0h1m1 0h2m-27 1h2m3 0h1m3 0h2m1 0h2m1 0h2m2 0h2m1 0h3m1 0h3m-29 1h5m1 0h1m2 0h4m2 0h1m1 0h1m1 0h1m4 0h2m2 0h1m-29 1h1m2 0h3m3 0h2m2 0h1m1 0h2m2 0h3m-22 1h1m1 0h2m2 0h3m5 0h1m2 0h1m2 0h5m1 0h3m-21 1h1m1 0h1m1 0h1m1 0h3m1 0h1m1 0h1m3 0h2m-26 1h7m8 0h6m1 0h1m1 0h3m-27 1h1m5 0h1m2 0h2m1 0h1m1 0h3m1 0h3m3 0h1m2 0h2m-29 1h1m1 0h3m1 0h1m2 0h2m1 0h3m1 0h1m1 0h8m2 0h1m-29 1h1m1 0h3m1 0h1m4 0h1m2 0h5m1 0h2m1 0h1m1 0h2m1 0h1m-29 1h1m1 0h3m1 0h1m5 0h6m1 0h9m-28 1h1m5 0h1m2 0h1m1 0h2m1 0h1m1 0h1m1 0h1m4 0h1m1 0h2m1 0h1m-29 1h7m1 0h2m3 0h1m3 0h1m1 0h1m4 0h1m1 0h1"/></svg>
     <div class="qr-url">https://cyril-mingdao.github.io/choose/</div>
@@ -451,6 +474,45 @@
         if (qrEnteredFs && document.fullscreenElement) document.exitFullscreen().catch(() => {});
         qrEnteredFs = false;
     });
+
+    // --- 全螢幕：進頁面先試著全螢幕，瀏覽器不允許時改在第一次觸碰時進入；圖示鈕可退出／恢復 ---
+    const fsBtn = document.getElementById('fs-btn');
+    const FS_ICON_ENTER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>';
+    const FS_ICON_EXIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg>';
+    const fsRoot = document.documentElement;
+    function isFs() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+    function enterFs() {
+        const req = fsRoot.requestFullscreen || fsRoot.webkitRequestFullscreen;
+        if (!req || isFs()) return;
+        try { const p = req.call(fsRoot); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+    }
+    function exitFs() {
+        const ex = document.exitFullscreen || document.webkitExitFullscreen;
+        if (!ex || !isFs()) return;
+        try { const p = ex.call(document); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+    }
+    function updateFsBtn() {
+        const on = isFs();
+        fsBtn.innerHTML = on ? FS_ICON_EXIT : FS_ICON_ENTER;
+        fsBtn.title = on ? '退出全螢幕' : '全螢幕';
+        fsBtn.setAttribute('aria-label', fsBtn.title);
+        if (on) window.removeEventListener('pointerup', autoFs, true);   // 進過全螢幕後就不再自動進入
+    }
+    function autoFs(e) {
+        if (e.target.closest('#fs-btn, #qr-btn')) return;
+        enterFs();
+    }
+    if (!(fsRoot.requestFullscreen || fsRoot.webkitRequestFullscreen)) fsBtn.style.display = 'none';   // iPhone Safari 不支援
+    fsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.removeEventListener('pointerup', autoFs, true);
+        if (isFs()) exitFs(); else enterFs();
+    });
+    document.addEventListener('fullscreenchange', updateFsBtn);
+    document.addEventListener('webkitfullscreenchange', updateFsBtn);
+    window.addEventListener('pointerup', autoFs, true);
+    updateFsBtn();
+    enterFs();
 
 </script>
 
